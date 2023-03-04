@@ -52,7 +52,7 @@ def save_model(model, model_dir,image_dataset_train):
         
 
 
-def test(model, test_loader,criterion,hook):
+def test(model, test_loader,criterion):
     '''
     This function takes two arguments and returns None
     
@@ -67,7 +67,6 @@ def test(model, test_loader,criterion,hook):
     
     # Setting SMDEBUG hook for testing Phase
     model.eval()
-    hook.set_mode(smd.modes.EVAL)
     test_loss = 0
     correct = 0
     loss = 0
@@ -89,7 +88,7 @@ def test(model, test_loader,criterion,hook):
         )
     )
 
-def train(model, train_loader, criterion, optimizer, epoch,hook,args):
+def train(model, train_loader, criterion, optimizer, epoch,args):
     '''
     This function takes five arguments and returns None
     
@@ -107,8 +106,6 @@ def train(model, train_loader, criterion, optimizer, epoch,hook,args):
     
     model.fc.require_grad = True
     model. train()
-    # Setting SMDEBUG hook for model training loop
-    hook.set_mode(smd.modes.TRAIN)
     for batch_idx, (data, target) in enumerate(train_loader):
         data = data.to(device)
         target = target.to(device)
@@ -210,12 +207,6 @@ def main(args):
     model = net()
     
     '''
-    Creatring Hook for Debugging and Profiling
-    '''
-    hook = smd.Hook.create_from_json_file()
-    hook.register_hook(model)
-    
-    '''
     Creating loss and optimizer
     '''
     loss_criterion = nn.CrossEntropyLoss(reduction='sum')
@@ -225,8 +216,8 @@ def main(args):
     epoch_times = []
     for epoch in range(args.epochs):
         start = time.time()
-        train(model, train_loader, loss_criterion, optimizer, epoch, hook,args)
-        test(model, test_loader, loss_criterion, hook)
+        train(model, train_loader, loss_criterion, optimizer, epoch,args)
+        test(model, test_loader, loss_criterion)
         save_model(model, args.model_dir,train_dataset)
         
         epoch_time = time.time() - start
